@@ -79,7 +79,138 @@ void pop_queue()
 * lalu lakukan perulangan seperti pada step ke 1, sampai semua isi queue habis.
 
 ```
-code here
+	insert_stack(fol);
+	
+	while(k>0)
+	{
+		char alamat[1024];
+		DIR *dp;
+		struct dirent *de;
+		(void) offset;
+		(void) fi;
+		struct stat st;
+		struct stat hm;
+		
+		pop_stack();
+		strcpy(alamat,yangdipop);
+		int hehe = strlen(aslinya);
+		if(strcmp(alamat,".")==0 && strcmp(alamat,"..")==0 && (alamat[hehe+1] != '.') && (alamat[hehe+2] != '.'))
+		{
+			continue;
+		}
+		
+		printf("alamat: %s\n",alamat);
+		
+		dp = opendir(alamat);
+		if (dp == NULL)
+			return -errno;
+		
+
+		while ((de = readdir(dp)) != NULL) {
+					
+			char name[1024];
+			char sekarang[1024];
+			int cek=0;
+			memset(name,0,1024);
+			memset(&st, 0, sizeof(st));
+			st.st_ino = de->d_ino;
+			st.st_mode = de->d_type << 12;
+			
+			strcpy(name,de->d_name);
+			if(strcmp(name,".")!=0 && strcmp(name,"..")!=0 && (name[0] != '.') && (name[1] != '.'))
+			{
+				printf("alamat: %s, name: %s\n",alamat,name);
+				char cekin[1024]={"/home/safhiram/"};
+				if(strcmp(alamat,cekin)==0)
+				{
+					snprintf(sekarang, sizeof(sekarang),"%s%s",alamat,de->d_name);
+				}
+				else
+				{
+					snprintf(sekarang, sizeof(sekarang),"%s/%s",alamat,de->d_name);
+				}
+				stat(sekarang, &hm);
+				printf("sekarang: %s\n",sekarang);
+				if(S_ISDIR(hm.st_mode))
+				{
+					printf("masuk folder\n");
+					int cur_length = strlen(sekarang);
+					if((strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0) && (sekarang[cur_length-1] != '.') && (sekarang[cur_length-2] != '.') && strcmp(de->d_name,"music")!=0)
+					{
+						printf("masuk stack\n");
+						insert_stack(sekarang);
+					}
+				}
+				else if(S_ISREG(hm.st_mode))
+				{
+					printf("masuk file\n");
+					if(strcmp(name+strlen(name)-4,".mp3")==0)
+					{
+						printf("file mp3\n");
+						cek=2;
+					}
+					
+					if(cek==2)
+					{
+						//cari asal file itu - pwd
+						printf("file mp3 suk\n");
+						char ketemu[1024];
+						memset(ketemu,0,sizeof(ketemu));
+						int i,l=0;
+						int j= strlen(sekarang);
+						for (i=0;i<j;i++)
+						{
+							if(aslinya[i]!=sekarang[i])
+							{
+								ketemu[l]=sekarang[i];
+								l++;
+							}
+						}
+						printf("ketemu path tanpa root : %s\n",ketemu);	
+						//kalo misal ada di root maka cek bernilai 1
+						char dirootgak[10]={"/"};
+						strcat(dirootgak,de->d_name);
+						
+						printf("dirootgak %s\n",dirootgak);
+						
+						if(strcmp(ketemu,dirootgak)==0)
+						{
+							printf("nama file sama kayak di root\n");
+							cek=1;
+						}
+						memset(dirootgak,0,sizeof(dirootgak));
+							
+						if(cek==2)
+							{
+								printf("nama file tidak sama kayak di root\n");
+								char pindah[1024];
+								strcpy(bukandiroot[k_root],de->d_name);
+								k_root++;
+								strcpy(dimanaberada[k_kasih],sekarang);
+								k_kasih++;
+								snprintf(pindah, sizeof(pindah),"%s/%s",aslinya,de->d_name);
+								printf("pindah : %s\n",pindah);
+								if(fork()==0)
+								{
+									char copy[1024];
+									snprintf(copy,sizeof(copy),"cp %s %s",sekarang,pindah);
+								 	execlp("bash", "bash", "-c",  copy,NULL);
+								}
+								printf("melewati rename\n");
+							}
+							
+						if(cek==1)
+						{
+							printf("file di mount\n");
+							if (filler(buf, de->d_name, &st, 0))
+							break;
+						}
+					}		
+				}			
+			}		
+		}
+	printf("selasai %d\n",k);
+		closedir(dp);
 ```
 
 <h5>MUSIC PLAYER</h5>
