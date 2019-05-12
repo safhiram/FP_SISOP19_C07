@@ -512,7 +512,7 @@ void cleanSong(){
 }
 ```
 
-<p> thread </p>
+<h3><b> THREAD </b></h3>
 
 
 ```
