@@ -214,4 +214,300 @@ void pop_queue()
 ```
 
 <h5>MUSIC PLAYER</h5>
+<p>terdapat beberapa fungsi yang dibuat yaitu</p>
+* Play Song
+ <p>fungsi ini berfungsi untuk melakukan play</p>
+ 
+```
+void *playSong(void *ptr){
 
+    //char *songName = (char *)ptr;
+    
+    while(1){
+        
+		wait(NULL);                
+        memset(songName,0,sizeof(songName));
+        strcpy(songName,dirpathh);
+        strcat(songName,song);
+
+     if(strlen(song) > 0){
+        
+            songIsOver = 0;
+            //cleanSong();
+
+            size_t buffer_size;
+            size_t done;
+            int err;
+
+            int driver;
+            
+            ao_sample_format format;
+            int channels, encoding;
+            long rate;
+
+            FILE *songFile = fopen(songName,"r");
+            if(songFile == NULL)
+                continue;
+            
+            /*if(strlen(songName) < 4)
+                exit(0);*/
+
+            /* initializations */
+            ao_initialize();
+            driver = ao_default_driver_id();
+            mpg123_init();
+            mh = mpg123_new(NULL, &err);
+            buffer_size = mpg123_outblock(mh);
+            buffer = (unsigned char*) malloc(buffer_size * sizeof(unsigned char));
+
+            /* open the file and get the decoding format */
+            mpg123_open(mh, songName);
+            mpg123_getformat(mh, &rate, &channels, &encoding);
+
+            /* set the output format and open the output device */
+            format.bits = mpg123_encsize(encoding) * BITS;
+            format.rate = rate;
+            format.channels = channels;
+            format.byte_format = AO_FMT_NATIVE;
+            format.matrix = 0;
+            dev = ao_open_live(driver, &format, NULL);
+
+            /* decode and play */
+            /*while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK){
+                
+                if(isPause == 0){
+                    ao_play(dev, buffer, done);
+                    //printf("not pause\n");
+                }
+                
+                if(songIsOver){
+                    break;
+                }
+            }*/
+
+            while(1){
+                if(isPause == 0){
+                    if(mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK){
+                        ao_play(dev, buffer, done);
+                    }else break;
+                }
+
+                if(songIsOver){
+                    break;
+                }
+            }
+
+            cleanSong();
+        }
+
+    }
+```
+
+* List Song
+<p>Fungsi ini berfungsi untuk melakukan list terhadap lagu yang ada</p>
+
+```
+void listSong(){
+    
+    DIR *dp;
+	struct dirent *de;
+
+	dp = opendir(dirpathh);
+	if (dp == NULL)
+		return;
+
+	while ((de = readdir(dp)) != NULL) {
+        if(strcmp(de->d_name,"..") != 0 && strcmp(de->d_name,".") != 0)
+		    printf("%s\n",de->d_name);
+    }
+
+    closedir(dp);
+    
+}
+```
+
+* Inisialisasi Song
+<p>Fungsi ini berfungsi untuk menyimpan nama file mp3 yang ada di folder fuse ke sebuah array of array yang berisi string</p>
+
+```
+void initSong(){
+    DIR *dp;
+	struct dirent *de;
+
+	dp = opendir(path);
+	if (dp == NULL)
+		return;
+
+    int i = 0;
+
+	while ((de = readdir(dp)) != NULL) {
+        if(strcmp(de->d_name,"..") != 0 && strcmp(de->d_name,".") != 0){
+            //store the song
+            strcpy(qSong[i],de->d_name);
+            //printf("%s\n",qSong[i]);
+            i++;
+        }
+		    
+    }
+
+    closedir(dp);
+}
+```
+
+* FindSongIndex
+<p>Fungsi ini berfungsi untuk mencari index dari lagu yang ada di folder tersebut</p>
+
+```
+int findSongIndex(char path_lagu[100]){
+    DIR *dp;
+	struct dirent *de;
+
+	dp = opendir(path);
+	if (dp == NULL)
+		printf("Eror direktori \n");
+
+    int count=0;
+
+	while ((de = readdir(dp)) != NULL) {
+        if(strcmp(de->d_name,"..") != 0 && strcmp(de->d_name,".") != 0){
+            if(strcmp(path_lagu,de->d_name) == 0){
+                return count;
+            }
+            count++;
+        }
+		    
+    }
+
+    closedir(dp);
+    return -1;
+}
+```
+
+* itunglagu
+<p>Fungsi ini berfungsi untuk mengetahui jumlah lagu yang ada di folder fuse</p>
+
+```
+int itunglagu(){
+    DIR *dp;
+	struct dirent *de;
+
+	dp = opendir(path);
+	if (dp == NULL)
+		printf("Eror direktori \n");
+
+    int count=0;
+
+	while ((de = readdir(dp)) != NULL) {
+        if(strcmp(de->d_name,"..") != 0 && strcmp(de->d_name,".") != 0){
+            count++;
+        }
+    }
+
+    closedir(dp);
+    return count;
+}
+```
+
+* masukin
+<p>Fungsi ini berfungsi untuk memasukkan input berupa play, next , previous atau pause</p>
+
+```
+void  masukin(){
+
+    char masukan[100];  
+    char pTemp[100];  
+
+    while(1){
+
+        printf("masukan input : ");
+        memset(masukan,0,sizeof(masukan));
+        memset(pTemp,0,sizeof(pTemp));
+        
+        //scanf("%s",masukan);
+	if(scanf("%s",masukan)){};        
+
+        for(int i=0; i < 4; i++){
+            pTemp[i] = masukan[i];
+        }
+            
+        if(strcmp(masukan,"pause")==0){
+            Pause = 1;
+           
+        }else if(strcmp(masukan,"next")==0){
+
+            selesai = 1;
+            memset(lagu,0,sizeof(lagu));
+            songIndex++;
+            if(songIndex < 0){
+                songIndex = itunglagu();
+            }else if(songIndex > itunglagu() - 1){
+                songIndex = 0;
+            }
+            
+            //printf("%d\n",itunglagu());
+            strcpy(lagu,qSong[songIndex]);
+            Pause = 0;
+          
+            
+            
+            
+        }else if(strcmp(masukan,"prev")==0){
+
+            selesai = 1;
+            memset(lagu,0,sizeof(lagu));
+            songIndex--;
+            if(songIndex < 0){
+                songIndex = itunglagu() - 1;
+            }
+            
+            
+            strcpy(lagu,qSong[songIndex]);
+            Pause = 0;
+            
+
+        }else if(strcmp(masukan,"list_lagu")==0){
+            listSong();
+        }else if(strcmp(pTemp,"play")==0 && Pause == 1 && strlen(masukan) < 5){
+
+            Pause = 0;         
+
+        }else if(strcmp(pTemp,"play")==0 && strlen(masukan) > 4){
+
+            selesai= 1;
+            memset(lagu,0,sizeof(lagu));
+        
+            
+            for(int i=0; i+4 < strlen(masukan); i++){
+                lagu[i] = masukan[i+4];
+
+            }
+            Pause = 0;
+            
+            songIndex = findSongIndex(lagu);
+printf("%s\n",path_lagu);
+
+        }else{
+            printf("jenis input tidak ada\n");
+        }
+
+    }
+
+}
+```
+
+* clean
+<p>Fungsi ini untuk menghapus file yang diputar dan library yang dipakai yaitu mpg123</p>
+
+```
+void cleanSong(){
+
+    /* clean up */
+    free(buffer);
+    ao_close(dev);
+    mpg123_close(mh);
+    mpg123_delete(mh);
+    mpg123_exit();
+    ao_shutdown();
+
+}
+```
