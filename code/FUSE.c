@@ -10,21 +10,17 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <pthread.h>
+#include <wait.h>
 
 int k_root=0;
 int k_kasih=0;
-int k_asal=0;
 int k=0;
-int jk=0;
 char semua[100][1000];
 char dimanaberada[100][1000];
 char bukandiroot[100][1000];
-char asal[100][1000];
 char yangdipop[1000];
 char tidakbisadiakses[1000]={"/home/safhiram/bis/music"};
-char pindah[1024];
 
 void insert_stack(char input[10000]);
 void pop_stack();
@@ -88,7 +84,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			st.st_mode = de->d_type << 12;
 			
 			strcpy(name,de->d_name);
-			if(strcmp(name,".")!=0 && strcmp(name,"..")!=0 && (name[0] != '.') && (name[1] != '.') && strcmp(de->d_name,"music")!=0)
+			if(strcmp(name,".")!=0 && strcmp(name,"..")!=0 && (name[0] != '.') && (name[1] != '.'))
 			{
 				printf("alamat: %s, name: %s\n",alamat,name);
 				char cekin[1024]={"/home/safhiram/"};
@@ -154,18 +150,19 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 						if(cek==2)
 							{
 								printf("nama file tidak sama kayak di root\n");
-								memset(pindah,0,sizeof(pindah));
+								char pindah[1024];
 								strcpy(bukandiroot[k_root],de->d_name);
 								k_root++;
 								strcpy(dimanaberada[k_kasih],sekarang);
 								k_kasih++;
 								snprintf(pindah, sizeof(pindah),"%s/%s",aslinya,de->d_name);
-								strcpy(asal[k_asal],pindah);
-								k_asal++;
 								printf("pindah : %s\n",pindah);
-								char apa[1024];
-								snprintf(apa,sizeof(apa),"cp %s %s",sekarang,pindah);
-								system(apa);
+								if(fork()==0)
+								{
+									char copy[1024];
+									snprintf(copy,sizeof(copy),"cp %s %s",sekarang,pindah);
+								 	execlp("bash", "bash", "-c",  copy,NULL);
+								}
 								printf("melewati rename\n");
 							}
 							
